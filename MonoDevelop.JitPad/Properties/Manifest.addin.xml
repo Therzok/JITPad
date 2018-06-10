@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<ExtensionModel>
+	<Runtime>
+	</Runtime>
+
+	<Extension path="/MonoDevelop/Ide/Pads">
+		<Pad id="MonoDevelop.JitPad.Pad"
+			 _label="JIT Output"
+			 icon="md-information"
+			 class="MonoDevelop.JitPad.Pad"
+			 group="Performance"
+			 defaultPlacement="right"
+			 defaultLayout="*"
+			 defaultStatus="Floating"/>
+	</Extension>
+</ExtensionModel>
