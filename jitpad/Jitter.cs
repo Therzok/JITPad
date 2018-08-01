@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace JitPad
 {
@@ -37,6 +39,8 @@ namespace JitPad
 	public class JitResult
 	{
 		public string Asm { get; }
+
+		public static JitResult Error = new JitResult("Compilation has errors");
 
 		internal JitResult(string asm)
 		{

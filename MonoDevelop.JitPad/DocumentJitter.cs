@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -59,8 +60,8 @@ namespace MonoDevelop.JitPad
 				var memberSymbol = sm.GetEnclosingSymbol(offset, token);
 				if (memberSymbol == null)
 					return empty;
-					
-				string[] parameterTypeNames = Array.Empty<string> ();
+
+				string[] parameterTypeNames = Array.Empty<string>();
 				if (memberSymbol is IMethodSymbol methodSymbol)
 				{
 					parameterTypeNames = methodSymbol.Parameters.Select(x => x.Type.ToDisplayString(SymbolDisplayFormat.MinimallyQualifiedFormat)).ToArray();
@@ -70,14 +71,27 @@ namespace MonoDevelop.JitPad
 					return empty;
 				}
 
-				// type
-				var typeName = memberSymbol.ContainingType.ToDisplayString(format);
+				var compilation = await roslynDoc.Project.GetCompilationAsync(token);
 
-				await Core.Runtime.RunInMainThread(() => IdeApp.ProjectOperations.Build(proj, token).Task);
+				var tempFile = Path.GetTempFileName();
+				try
+				{
+					using (var stream = File.OpenWrite(tempFile))
+					{
+						var emitResult = compilation.Emit(stream, options: new Microsoft.CodeAnalysis.Emit.EmitOptions () cancellationToken: token);
+					}
+					if (!emitResult.Success)
+						return Enumerable.Repeat(JitResult.Error, 1);
+					var result = new CompileResult(tempFile);
 
-				var result = new CompileResult(roslynDoc.Project.OutputFilePath);
-
-				return jitter.Jit(result, new MethodDescription (typeName, memberSymbol.MetadataName, parameterTypeNames));
+					// type
+					var typeName = memberSymbol.ContainingType.ToDisplayString(format);
+					return jitter.Jit(result, new MethodDescription(typeName, memberSymbol.MetadataName, parameterTypeNames));
+				}
+				finally
+				{
+					File.Delete(tempFile);
+				}
 			}, token);
 		}
 
